@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashSet;
 import java.util.Set;
 
 
@@ -17,7 +18,7 @@ public class V2EXSpiderBot extends TelegramLongPollingBot {
 
     private static final Logger log = LogManager.getLogger(V2EXSpiderBot.class);
 
-    private Long currentChatId = null;
+    private final Set<Long> currentChatId = new HashSet<>();
 
     @Override
     public String getBotUsername() {
@@ -32,38 +33,32 @@ public class V2EXSpiderBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
+
             String receiveText = update.getMessage().getText();
             Long chatId = update.getMessage().getChatId();
 
-            String handleText = handleCommand(chatId, receiveText);
-
-            if (handleText != null) {
-                SendMessage message = new SendMessage();
-                message.setChatId(chatId.toString());
-                message.setText(handleText);
-                try {
-                    execute(message);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
-            }
+            boolean status = handleCommand(chatId, receiveText);
+            log.debug("handleCommand status: {}", status);
         }
     }
 
-    private String handleCommand(Long chatId, String receiveText) {
+    private boolean handleCommand(Long chatId, String receiveText) {
         log.debug("chatId: {}, receiveText: {}", chatId, receiveText);
 
-        if (chatId.equals(currentChatId) && !receiveText.startsWith("/")) {
+        if (currentChatId.contains(chatId) && !receiveText.startsWith("/")) {
             Database.addUserKeyword(chatId, receiveText);
-            currentChatId = null;
-            return "Keyword added.";
+            currentChatId.remove(chatId);
+            sendMessage(chatId, String.format(Commands.addKeywordResponse, receiveText));
+        } else if (currentChatId.contains(chatId) && receiveText.startsWith("/")) {
+            currentChatId.remove(chatId);
         }
 
         switch (receiveText) {
-            case Commands.start: {
-                return "Hello";
-            }
-            case Commands.listKeyword: {
+            case Commands.start:
+                sendMessage(chatId, Commands.startResponse);
+                return true;
+
+            case Commands.listKeyword:
                 Set<String> userKeyword = Database.getUserKeywords(chatId);
                 StringBuilder keywordText = new StringBuilder();
                 int index = 1;
@@ -71,24 +66,32 @@ public class V2EXSpiderBot extends TelegramLongPollingBot {
                     keywordText.append(index++).append(". ").append(value);
                     keywordText.append("\n");
                 }
-                return "Your Keyword: \n\n" + keywordText;
-            }
-            case Commands.clearKeyword: {
+                sendMessage(chatId, Commands.listKeywordResponse + keywordText);
+                return true;
+
+            case Commands.clearKeyword:
                 if (Database.clearUserKeywords(chatId)) {
-                    return "Clear successful.";
+                    sendMessage(chatId, Commands.clearKeywordSuccessResponse);
+                    return true;
                 }
-                return "You have no keyword to clear.";
-            }
-            case Commands.addKeyword: {
-                currentChatId = chatId;
-                return "OK. Send me a keyword.";
-            }
-            case Commands.latestEntry: {
+                sendMessage(chatId, Commands.clearKeywordFailResponse);
+                return false;
+
+            case Commands.addKeyword:
+                currentChatId.add(chatId);
+                sendMessage(chatId, Commands.addKeywordStartResponse);
+                return true;
+
+            case Commands.latestEntry:
                 sendMessage(chatId, Database.getLatestEntry().toString());
-                return null;
-            }
+                return true;
+
+            case Commands.debug:
+                sendMessage(chatId, Database.getUserKeywordsMap().toString());
+                return true;
+
             default:
-                return null;
+                return true;
         }
     }
 
@@ -96,10 +99,11 @@ public class V2EXSpiderBot extends TelegramLongPollingBot {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId.toString());
         sendMessage.setText(text);
+        sendMessage.setDisableWebPagePreview(true);
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {
-            e.printStackTrace();
+            log.error("sendMessage failed: {}", e.getMessage());
         }
     }
 
