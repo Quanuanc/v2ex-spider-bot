@@ -104,6 +104,10 @@ public class V2EXSpiderBot extends TelegramLongPollingBot {
             execute(sendMessage);
         } catch (TelegramApiException e) {
             log.error("sendMessage failed: {}", e.getMessage());
+            if (e.getMessage().equals("Error sending message")) {
+                log.debug("failed to send message to {}, remove his keywords", chatId);
+                Database.clearUserKeywords(chatId);
+            }
         }
     }
 

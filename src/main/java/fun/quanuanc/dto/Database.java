@@ -64,7 +64,7 @@ public class Database {
 
     public static boolean clearUserKeywords(Long chatId) {
         if (userKeywordsMap.containsKey(chatId)) {
-            userKeywordsMap.put(chatId, new HashSet<>());
+            userKeywordsMap.remove(chatId);
             return true;
         }
         return false;
