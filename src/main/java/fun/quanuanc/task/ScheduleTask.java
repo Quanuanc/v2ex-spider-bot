@@ -56,9 +56,11 @@ public class ScheduleTask extends TimerTask {
         if (userKeywordsMap.size() > 0) {
             if (keywordEntryMap.size() > 0) {
 
-                for (Map.Entry<Long, Set<String>> userKeywordsMapEntry : userKeywordsMap.entrySet()) {
-                    Long userChatId = userKeywordsMapEntry.getKey();
-                    Set<String> userKeywords = userKeywordsMapEntry.getValue();
+                for (Map.Entry<Long, Set<String>> userKeywordsMapEntry : userKeywordsMap.entrySet()) {//遍历用户表
+
+                    Long userChatId = userKeywordsMapEntry.getKey(); //用户id
+                    Set<String> userKeywords = userKeywordsMapEntry.getValue();//用户keywords
+
                     StringBuilder textBuilder = new StringBuilder();
 
                     for (String userKeyword : userKeywords) {
@@ -72,8 +74,8 @@ public class ScheduleTask extends TimerTask {
                         }
                     }
                     v2EXSpiderBot.sendMessage(userChatId, textBuilder.toString());
-                    keywordEntryMap.clear();
                 }
+                keywordEntryMap.clear();
             }
         }
     }
