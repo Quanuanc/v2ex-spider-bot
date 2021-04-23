@@ -32,8 +32,8 @@ public class Main {
         //获取Feed
         ScheduleTask scheduleTask = new ScheduleTask();
         scheduleTask.setV2EXSpiderBot(myBot);
-        Timer getFeedTimer = new Timer();
-        getFeedTimer.schedule(scheduleTask, 0, Config.SCHEDULE_TASK_PERIOD);
+        Timer scheduleTaskTimer = new Timer();
+        scheduleTaskTimer.schedule(scheduleTask, 0, Config.SCHEDULE_TASK_PERIOD);
 
     }
 }
