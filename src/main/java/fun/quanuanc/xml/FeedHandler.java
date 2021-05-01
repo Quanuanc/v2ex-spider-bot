@@ -43,12 +43,13 @@ public class FeedHandler extends DefaultHandler {
             Database.setLatestEntry(parsedEntry.get(parsedEntry.size() - 1));
             entryQueue.addAll(parsedEntry);
         } else {
+            Entry newLastEntry = parsedEntry.get(parsedEntry.size() - 1);
             for (int i = parsedEntry.size() - 1; i > -1; i--) {
                 Entry entry = parsedEntry.get(i);
                 if (entry.getPublishedTime().after(Database.getLatestEntry().getPublishedTime())) {
                     entryQueue.add(entry);
-                    Database.setLatestEntry(entry);
                 } else {
+                    Database.setLatestEntry(newLastEntry);
                     break;
                 }
             }

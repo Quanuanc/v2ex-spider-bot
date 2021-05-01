@@ -68,9 +68,15 @@ public class ScheduleTask extends TimerTask {
                         if (userKeywordEntrySet == null) {
                             continue;
                         }
-                        short index = 0;
-                        for (Entry entry : userKeywordEntrySet) {
-                            textBuilder.append(index++).append(". ").append(entry.toString()).append("\n");
+                        if (userKeywordEntrySet.size() > 1) {
+                            short index = 0;
+                            for (Entry entry : userKeywordEntrySet) {
+                                textBuilder.append(index++).append(". ").append(entry.toString()).append("\n");
+                            }
+                        } else {
+                            for (Entry entry : userKeywordEntrySet) {
+                                textBuilder.append(entry.toString()).append("\n");
+                            }
                         }
                     }
                     v2EXSpiderBot.sendMessage(userChatId, textBuilder.toString());
